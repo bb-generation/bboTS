@@ -1,0 +1,110 @@
+
+bboTS
+-----
+
+
+    Table of Contents
+    1. Synopsis
+    2. Features
+    3. Installation
+
+        3.1. Dependencies
+
+    4. More Information
+
+        4.1. How to report bugs
+        4.2. How to get involved
+
+    5. Licensing
+    6. Development
+
+
+
+1. Synopsis
+
+   bboTS is a free team switching client. It can be used to automatically
+   switch users currently playing on a Call of Duty: Black Ops server and
+   currently using a specified TeamSpeak3 Server to designated channels.
+   bboTS can be used on any platform supporting Java6.
+    ___________________________________________________________________________
+
+2. Features
+
+    * Switch users on a TS3 server depending on their current Black Ops team.
+    * Uses EJTS3ServerQuery library to connect to the TeamSpeak3 server.
+    * Uses the Call of Duty: Black Ops RCon protocol to communicate with the
+      game server.
+    * ...
+    ___________________________________________________________________________
+
+3. Installation
+
+   If you only want to run bboTS you can use the provided stable packages. A
+   detailed HowTo can be found at https://github.com/bb-generation/bboTS/wiki/Install-bboTS
+   Otherwise if you want to install it from source please read chapter 3.2
+    ___________________________________________________________________________
+
+3.1. Dependencies
+
+    * Oracle Java6
+
+   If you want to install from source you additionally need
+    * git
+    * Javadoc
+    * Apache Ant
+    ___________________________________________________________________________
+
+3.2. Install from source
+
+   1. `git clone git://github.com/bb-generation/bboTS.git`
+   2. `mkdir config`
+   3. `cp config.examples/*.properties config/`
+   4. Configure bboTS as seen in https://github.com/bb-generation/bboTS/wiki/Install-bboTS
+   5. `ant run`
+    ___________________________________________________________________________
+
+4. More Information
+
+   This program was originally written because there was no option to change
+   teams on a Black Ops Ranked Server.
+   But bboTS is alse useful for playing on an Unranked Server, e.g. if you
+   don't care about who is playing with whom on a training session.
+    ___________________________________________________________________________
+
+4.1 How to report bugs
+
+   Bugs can be filed as issues at the Github Issue Tracker at
+   https://github.com/bb-generation/bboTS/issues or submitted
+   directly to us at bbots@bbgen.net.
+    ___________________________________________________________________________
+
+4.2. How to get involved
+
+   If you are a Java developer and would like to help us develope this library
+   please take a look at our Github Project at
+   https://github.com/bb-generation/bboTS
+   If you have implemented a new feature, just create a new Issue and attach
+   your patch to it. Take a look at HACKING for further details.
+    ___________________________________________________________________________
+
+5. Licensing
+
+   bboTS is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+   
+   bboTS is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+   
+   You should have received a copy of the GNU General Public License
+   along with bboTS.  If not, see <http://www.gnu.org/licenses/>.
+    ___________________________________________________________________________
+
+6. Development
+
+   To get in contact with the developers, write an e-mail to bbots@bbgen.net or join the IRC channel #bbgenots at irc.freenode.org
+   If you want to the latest version of bboTS, use
+   `git clone git://github.com/bb-generation/bboTS.git`

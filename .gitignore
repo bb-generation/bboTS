@@ -1,0 +1,23 @@
+
+#eclipse stuff
+.settings/
+.classpath
+.project
+
+#libraries
+lib/
+
+#builds
+build/
+bboTS.jar
+
+#config
+config/config.properties
+config/users.properties
+
+#distribution
+bboTS.zip
+bboTS.tar.gz
+
+#doxygen
+javadoc/

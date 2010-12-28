@@ -1,0 +1,27 @@
+If you want to make changes to bboTS, just do it. There are currently no style guidelines. But keep in mind, that if your code gets integrated into the main-line, I will probably make style changes, so it fits into the rest of it.
+
+If you think your changes may interest others, please create a new Issue at github (https://github.com/bb-generation/bboTS/issues) and attach your patch to it (git diff)
+
+
+Short HowTo on how to get involved
+==================================
+At first clone the original git project:
+    git clone git://github.com/bb-generation/bboTS.git
+
+Then create a new branch
+    git checkout -b my_new_branch
+
+Now do some work.
+Then make a commit (you can make as many commits as you want)
+    git commit -am "Fixed bug xyz."
+
+Now create a patch
+    git format-patch master --stdout > my_new_branch.patch
+
+After that go to https://gist.github.com/ and upload your my_new_branch.patch
+Finally you can visit https://github.com/bb-generation/bboTS/issues and create
+a new Issue containing a link to your uploaded file as seen above.
+
+
+Bernhard Eder <bbots@bbgen.net>, 2010-12-12
+

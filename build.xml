@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project name="bboTS" default="run" basedir=".">
+	
+	<property name="src.dir" value="src"/>
+	<property name="build.dir" value="build"/>
+	<property name="config.dir" value="config"/>
+	<property name="javadoc.dir" value="javadoc"/>
+	<property name="lib.dir" value="lib"/>
+	<property name="jar.dir" value="."/>
+	<property name="jar.file" value="${jar.dir}/${ant.project.name}.jar"/>
+	<property name="zip.file" value="${ant.project.name}.zip"/>
+	<property name="tar.file" value="${ant.project.name}.tar.gz"/>
+
+	<path id="classpath" >
+		<fileset dir="${lib.dir}" includes="**/*.jar"/>
+	</path>
+
+	<tstamp>
+		<format property="TODAY" pattern="yyyy-MM-dd HH:mm:ss"/>
+	</tstamp>
+	
+	<target name="compile" description="Compile project.">
+		<mkdir dir="${build.dir}"/>
+		<javac srcdir="${src.dir}" destdir="${build.dir}"
+			classpathref="classpath"
+			debug="true" deprecation="true"
+			includeantruntime="false" />
+	</target>
+
+	<target name="jar" depends="compile" description="Build .jar file.">
+		<jar destfile="${jar.file}">
+			<fileset dir="${build.dir}"/>
+			<fileset dir="${lib.dir}" />
+			
+			<manifest>
+				<attribute name="Main-Class" value="at.bbgen.bbots.BBOTSMain"/>
+				<attribute name="Built-By" value="${user.name}"/>
+				<attribute name="Built-Date" value="${TODAY}"/>
+			</manifest>
+
+			<metainf dir="." includes="COPYING,README"/>
+		</jar>
+	</target>
+
+	<target name="run" depends="jar" description="Run bboTS">
+		<java classname="at.bbgen.bbots.BBOTSMain" fork="true">
+			<classpath>
+				<path refid="classpath"/>
+				<path location="${jar.file}"/>
+			</classpath>
+			<arg value="${config.dir}/config.properties"/>
+			<arg value="${config.dir}/users.properties"/>
+		</java>
+	</target>
+
+	<target name="javadoc" description="Create Javadocs for bboTS (Requires Javadoc 1.4+)">
+		<mkdir dir="${javadoc.dir}"/>
+		<javadoc destdir="${javadoc.dir}" additionalparam="-J-Dorg.apache.commons.attributes.javadoc.CATaglet.sources=${basedir}">
+			<fileset dir="${src.dir}" includes="**/*.java"/>
+		</javadoc>
+	</target>
+	
+	<target name="clean" description="Clean build products.">
+		<delete dir="${build.dir}"/>
+		<delete dir="${javadoc.dir}"/>
+		<delete file="${jar.file}"/>
+	</target>
+	
+	<target name="rebuild" depends="clean, jar" description="Clean and build products." />
+
+	<target name="build-zip" depends="rebuild" description="Build a zip file for win32 redistribution.">
+
+		<zip destfile="${zip.file}">
+			<zipfileset dir="." includes="bboTS.jar" prefix="bboTS" />
+			<zipfileset dir="config.examples" includes="*.properties" prefix="bboTS" />
+			<zipfileset dir="." includes="AUTHORS" prefix="bboTS" />
+			<zipfileset dir="." includes="HOWTO.txt" prefix="bboTS" />
+			<zipfileset dir="." includes="start_bboTS.bat" prefix="bboTS" />
+		</zip>
+	</target>
+
+
+	<target name="build-tar" depends="rebuild" description="Build a tar.gz file for linux redistribution.">
+		<tar destfile="${tar.file}" compression="gzip">
+			<tarfileset dir="." includes="bboTS.jar" prefix="bboTS" />
+			<tarfileset dir="config.examples" includes="*.properties" prefix="bboTS" />
+			<tarfileset dir="." includes="AUTHORS" prefix="bboTS" />
+			<tarfileset dir="." includes="HOWTO.txt" prefix="bboTS" />
+		</tar>
+
+	</target>
+
+
+
+</project>

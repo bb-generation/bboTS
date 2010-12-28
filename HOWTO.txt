@@ -1,0 +1,9 @@
+bboTS
+=====
+
+If you don't know how to start bboTS, take a look at the official install guide
+	https://github.com/bb-generation/bboTS/wiki/Install-bboTS
+
+
+
+For further questions you can write an e-mail to bbots@bbgen.net
