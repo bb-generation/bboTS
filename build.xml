@@ -19,6 +19,22 @@
 	<tstamp>
 		<format property="TODAY" pattern="yyyy-MM-dd HH:mm:ss"/>
 	</tstamp>
+
+	<path id="build.classpath">
+		<fileset dir=".">
+			<include name="${lib.dir}/*.jar"/>
+		</fileset>
+	</path>
+
+	<pathconvert property="jar.classpath" pathsep=" ">
+		<path refid="build.classpath"/>
+		<mapper>
+			<chainedmapper>
+				<flattenmapper/>
+				<globmapper from="*.jar" to="lib/*.jar"/>
+			</chainedmapper>
+		</mapper>
+	</pathconvert>
 	
 	<target name="compile" description="Compile project.">
 		<mkdir dir="${build.dir}"/>
@@ -37,6 +53,8 @@
 				<attribute name="Main-Class" value="at.bbgen.bbots.BBOTSMain"/>
 				<attribute name="Built-By" value="${user.name}"/>
 				<attribute name="Built-Date" value="${TODAY}"/>
+				
+				<attribute name="Class-Path" value="${jar.classpath}"/>
 			</manifest>
 
 			<metainf dir="." includes="COPYING,README"/>
@@ -77,6 +95,7 @@
 			<zipfileset dir="." includes="AUTHORS" prefix="bboTS" />
 			<zipfileset dir="." includes="HOWTO.txt" prefix="bboTS" />
 			<zipfileset dir="." includes="start_bboTS.bat" prefix="bboTS" />
+			<zipfileset dir="lib" includes="*.jar" prefix="bboTS/lib" />
 		</zip>
 	</target>
 
