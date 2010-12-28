@@ -72,6 +72,8 @@ public class BBOTSMain {
 				bots.add(bbots);
 			}
 			
+			System.out.println("bboTS is up and running...");
+			
 		} catch (BOTeamSwitcherException e)
 		{
 			System.out.println("Error while trying to init BBOTS System: "+e.getMessage());
