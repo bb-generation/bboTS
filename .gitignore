@@ -14,6 +14,8 @@ bboTS.jar
 #config
 config/config.properties
 config/users.properties
+config.properties
+users.properties
 
 #distribution
 bboTS.zip
