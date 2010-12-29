@@ -24,7 +24,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
-import at.bbgen.lborc.*;
+import at.bbgen.lborc.BOUser;
+import at.bbgen.lborc.RConnection;
+import at.bbgen.lborc.RConnectionException;
 
 /**
  * BOConnection scans periodically for the player list.
