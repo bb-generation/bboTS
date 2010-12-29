@@ -27,6 +27,8 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import at.bbgen.lborc.BOUser;
+
 /**
  * A team switcher instance which switches users playing on <b>one</b> Black Ops server.
  * 

@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+import at.bbgen.lborc.*;
 
 /**
  * BOConnection scans periodically for the player list.
@@ -54,8 +55,8 @@ public class BOConnection
 		}
 		try
 		{
-			boServerWorker = new BOServerWorker(this.boServerAddress, this.boServerPort, this.boServerPassword, 1000);
-		} catch (BOWorkerException e)
+			boServerWorker = new RConnection(this.boServerAddress, this.boServerPort, this.boServerPassword, 1000);
+		} catch (RConnectionException e)
 		{
 			throw new BOConnectionException("Error while trying to instance BOServerWorker: "+e.getMessage());
 		}
@@ -111,7 +112,7 @@ public class BOConnection
 			{
 				boUsers = new HashMap<Integer, BOUser>(newBoUsers);
 			}
-		} catch (BOWorkerException e)
+		} catch (RConnectionException e)
 		{
 			System.out.println("Timer: Error while trying to sendRequest(): "+e.getMessage());
 		}
@@ -179,7 +180,7 @@ public class BOConnection
 	private HashMap<Integer, BOUser> boUsers;
 	private int boServerTimer;
 	private Timer requestTimer;
-	private BOServerWorker boServerWorker;
+	private RConnection boServerWorker;
 	private String boServerPassword;
 	private InetAddress boServerAddress;
 	private int boServerPort;
