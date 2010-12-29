@@ -114,7 +114,7 @@ public class UserProperties
 		
 		synchronized(this)
 		{
-			users = newUsers;
+			users = new HashMap<String, PUser>(newUsers);
 		}
 	}
 	
