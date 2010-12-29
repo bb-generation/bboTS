@@ -20,12 +20,11 @@
 package at.bbgen.bbots;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
-import java.util.ArrayList;
+import java.net.SocketTimeoutException;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -39,7 +38,7 @@ import java.util.List;
  * @author Bernhard Eder <bbots@bbgen.net>
  *
  */
-public class BOServerWorker extends Thread
+public class BOServerWorker
 {
 	/**
 	 * Initializes all local data but does not send anything to the server yet.
@@ -49,20 +48,13 @@ public class BOServerWorker extends Thread
 	 * @param password RCon Password
 	 * @throws BOWorkerException Will be thrown if the socket can not be opened.
 	 */
-	public BOServerWorker(InetAddress serverAddress, int serverPort, String password) throws BOWorkerException
+	public BOServerWorker(InetAddress serverAddress, int serverPort, String password, int connectionTimeout) throws BOWorkerException
 	{
 		this.serverAddress = serverAddress;
 		this.serverPort = serverPort;
 		this.password = password;
-		this.boActionClass = null;
+		this.connectionTimeout = connectionTimeout;
 		generateTeamStatusPackage();
-		try
-		{
-			this.socket = new DatagramSocket();
-		} catch (SocketException e)
-		{
-			throw new BOWorkerException("Error while trying to open udp socket: "+e.getMessage());
-		}
 	}
 	
 	/**
@@ -70,278 +62,100 @@ public class BOServerWorker extends Thread
 	 * 
 	 * @throws BOWorkerException Will be thrown if the package could not be sent.
 	 */
-	public void sendTeamStatusRequest() throws BOWorkerException
+	public List<BOUser> sendTeamStatusRequest() throws BOWorkerException
 	{
 		if(sendTeamStatusPackage == null || sendTeamStatusPackage.length < 18)
 			throw new BOWorkerException("Send Package has not been created yet.");
 		DatagramPacket packet = new DatagramPacket(sendTeamStatusPackage, sendTeamStatusPackage.length, serverAddress, serverPort);
-		try
-		{
-			socket.send(packet);
-		} catch (IOException e)
-		{
-			throw new BOWorkerException("Error while trying to send UDP package: "+e.getMessage());
-		}
-	}
-	
-	/**
-	 * Registers the callback class. See {@link BOServerWorker} for more details.
-	 * 
-	 * @param boActionClass The callback class
-	 * @throws BOWorkerException Will be thrown if {@link #boActionClass} is invalid.
-	 */
-	public void registerAction(BOServerWorkerAction boActionClass) throws BOWorkerException
-	{
-		if(boActionClass != null)
-			this.boActionClass = boActionClass;
-		else
-			throw new BOWorkerException("registerAction() error: boActionClass is null");
-	}
-	
-	/**
-	 * BOServerWorker runs in it's own thread and checks permanently for new incoming packages.
-	 * 
-	 */
-	@Override
-	public void run()
-	{
-		byte[] buf = new byte[BUFFERSIZE];
-		while(true)
-		{
-			try
-			{
-				DatagramPacket packet = new DatagramPacket(buf, buf.length);
-				socket.receive(packet);
-				//String received = new String(packet.getData(), 0, packet.getLength());
-				//System.out.println("Quote of the Moment: " + received);
-				
 
-				List<BOUser> users = new LinkedList<BOUser>();
-				
-				
-				int count_0a = 0;
-				
-				//System.out.println(getHex(packet.getData()));
-				
-				// analyze if the current package contains 0x0a 0x0a:
-				boolean contains2LF = false;
-				twoLFLoop:
-				for(int i=0;i<packet.getLength()-1; ++i)
-				{
-					if(packet.getData()[i] == 0x0a && packet.getData()[i+1] == 0x0a)
-					{
-						contains2LF = true;
-						break twoLFLoop;
-					}
-				}
-				
-				
-				byte[] analyzePacket = new byte[0];
-				
-				if(!contains2LF)
-				{
-					tempPackage = new byte[packet.getLength()];
-					System.arraycopy(packet.getData(), 0, tempPackage, 0, packet.getLength());
-					tempPackageLength = packet.getLength();
-				}
-				else
-				{
-					if(tempPackage != null)
-					{
-						// TODO: presumption: package order is not reversed -> implement checking for "print.map"
-						analyzePacket = new byte[tempPackageLength+packet.getLength()  -12];
-						System.arraycopy(tempPackage, 0, analyzePacket, 0, tempPackageLength-1);
-						System.arraycopy(packet.getData(), 11, analyzePacket, tempPackageLength-1, packet.getLength()-11);
-						tempPackage = null;
-					}
-					else
-						analyzePacket = packet.getData();
-					
-					packetLoop:
-					for(int i=0; i<analyzePacket.length; ++i)
-					{
-						if(analyzePacket[i] == 0x0a)
-							count_0a++;
-						
-						if(analyzePacket[i] == 0x0a && analyzePacket[i+1] == 0x0a)
-						{
-							//System.out.println("i="+i);
-							//System.out.println("got 0x0a 0x0a");
-							break packetLoop;
-						}
-						
-						if(analyzePacket[i] == 0x0a && count_0a > 3)
-						{
-							// geting length:
-							int j=0;
-							for(j=i+1;j<analyzePacket.length;++j)
-							{
-								if(analyzePacket[j] == 0x0a)
-									break;
-							}
-							
-							byte[] line = new byte[j-i-1];
-							System.arraycopy(analyzePacket, i+1, line, 0, j-i-1);
-							
-							String sLine = new String(line, "US-ASCII");
-							
-							ArrayList<String> parameters = splitParameter(sLine);
-							
-							if(parameters.size() < 10)
-							{
-								i += 1;
-								continue packetLoop;
-							}
-							
-							//System.out.println("i="+i);
-							//System.out.println("|"+getHex(getParameter(packet.getData(), i, 94).getBytes()));
-							/**** ID ****/
-							String sId = parameters.get(0);
-							//System.out.println("id = "+getHex(sId.getBytes()));
-							int id = -1;
-							try
-							{
-								id = Integer.parseInt(sId.trim());
-							} catch (NumberFormatException e)
-							{
-								System.out.println("Error while trying to convert id ("+sId+"): "+e.getMessage());
-								
-								i+=1;
-								continue packetLoop;
-							}
-							
-							if(id < 1) // just the democlient
-							{
-								i+=1;
-								continue packetLoop;
-							}
-							
-							/**** Score ****/
-							
-							/**** Ping ****/
-							
-							/**** GUID ****/
-							//String sGUID = getParameter(analyzePacket, i+OFF_GUID, LENGTH_GUID);
-							String sGUID = parameters.get(3);
-							int guid = -1;
-							try
-							{
-								guid = Integer.parseInt(sGUID.trim());
-							}	catch (NumberFormatException e)
-							{
-								System.out.println("Error while trying to convert guid ("+sGUID+"): "+e.getMessage());
-								
-								i+=1;
-								continue packetLoop;
-							}
-							
-							
-							/**** Nickname ****/
-							
-							/**** Team ****/
-							//String sTeam = getParameter(analyzePacket, i+OFF_TEAM, LENGTH_TEAM);
-							String sTeam = parameters.get(parameters.size()-5);
-							int team = -1;
-							try
-							{
-								team = Integer.parseInt(sTeam.trim());
-							} catch (NumberFormatException e)
-							{
-								System.out.println("Error while trying to convert team ("+sTeam+"): "+e.getMessage());
-								i+=1;
-								continue packetLoop;
-							}
-							if(team > 2 || team < 0)
-								continue packetLoop; // invalid team -> ignore (probably CNCT?)
-							
-							BOUser boUser = new BOUser();
-							boUser.setId(id);
-							boUser.setGuid(guid);
-							boUser.setTeam(team);
-							
-							if(id > 0)
-							{
-								users.add(boUser);
-								//System.out.println("Added user: "+boUser);
-							}
-							
-							i += 1;
-							
-						}
-					}
-					
-					
-					if(boActionClass != null)
-						boActionClass.commitBOUsers(users);
-					else
-						System.out.println("Cannot commit to boActionClass: boActionClass == null");
-					
-				}
-
-			} catch (IOException e)
+		String recPackage = sendPacket(packet);
+		String[] pkgLines = recPackage.split("\n"); // line feed split
+		int i = 0;
+		List<BOUser> retList = new LinkedList<BOUser>();
+		for(String line : pkgLines)
+		{
+			StrParser curLine = new StrParser(line);
+			
+			if(i==0) // map: [....]
 			{
-				if(!socket.isClosed())
-					System.out.println("Error while trying to receive UDP packages.");
-				else
-					return;
+				// if(curLine.readSimpleString().equals("map:"))
+				//	System.out.println("Current map is "+curLine.readSimpleString());
 			}
-		}
-	}
-	
-	/**
-	 * Is used to split the columns returned by the rcon protocol
-	 * @param sLine a whole line given by the rcon protocol (e.g. by the teamStatus request)
-	 * @return a List of cells
-	 */
-  private ArrayList<String> splitParameter(String sLine)
-	{
-		ArrayList<String> retList = new ArrayList<String>();
-		
-		StringBuilder par = new StringBuilder();
-		for(int i=0;i<sLine.length();++i)
-		{
-			if((int)sLine.charAt(i) == 32)
+			// else if(i == 1 || i == 2) // table headers
+			// { }	
+			else if(i > 2)
 			{
-				if(par.length() > 0)
+				BOUser boUser = new BOUser();
+				
+				try
 				{
-					retList.add(par.toString());
-					par = new StringBuilder();
+					boUser.setId(curLine.readInteger());
+					boUser.setScore(curLine.readInteger());
+					boUser.setPing(curLine.readInteger());
+					boUser.setGuid(curLine.readInteger());
+					boUser.setName(curLine.readUsername());
+					boUser.setTeam(curLine.readInteger());
+					boUser.setLastmsg(curLine.readInteger());
+					boUser.setIpAddress(curLine.readSimpleString());
+					boUser.setQport(curLine.readInteger());
+					boUser.setRate(curLine.readInteger());
+					
+					
+					if(boUser.getId()>0) // only add real players (not the democlient)
+					{
+						System.out.println("added..."+boUser);
+						retList.add(boUser);
+					}
+				} catch (BOWorkerException e)
+				{
+					System.out.println("Error while trying to parse line: "+e.getMessage());
 				}
 			}
-			else
-				par.append(sLine.charAt(i));
+			
+			++i;
 		}
-		if(par.length() > 0)
-			retList.add(par.toString());
-  	
 		return retList;
 	}
-
-	/**
-	 * encodes specified bytes by US-ASCII
-	 * @param data byte data array
-	 * @param start offset
-	 * @param count length
-	 * @return String representation of the encoded byte[] array.
-	 */
-	public String getParameter(byte[] data, int start, int count)
+	
+	
+	private String sendPacket(DatagramPacket packet) throws BOWorkerException
 	{
+		DatagramSocket dSocket = null;
 		try
 		{
-			return new String(data, start, count, "US-ASCII");
-		} catch (UnsupportedEncodingException e)
+			dSocket = new DatagramSocket();
+			dSocket.setSoTimeout(connectionTimeout);
+			dSocket.send(packet);
+		} catch (SocketException e)
 		{
-			System.out.println("unsupported encoding: "+e.getMessage());
-			return "";
+			throw new BOWorkerException("Error while trying to send package: "+e.getMessage());
+		} catch (IOException e)
+		{
+			throw new BOWorkerException("Error while trying to send package: "+e.getMessage());
 		}
-	}
-	
-	/**
-	 * stops the internal thread
-	 */
-	public void stopWorker()
-	{
-		socket.close();
+		byte[] buf = new byte[BUFFERSIZE];
+		DatagramPacket receivePackage = new DatagramPacket(buf, buf.length);
+		
+		StringBuffer retString = new StringBuffer();
+		try
+		{
+			while(true)
+			{
+				dSocket.receive(receivePackage);
+				
+				retString.append(new String(receivePackage.getData(), 11, receivePackage.getLength()-11, "US-ASCII"));
+			}
+		} catch (SocketTimeoutException e)
+		{
+			// intended exit for endless loop
+			
+		} catch (IOException e)
+		{
+			throw new BOWorkerException("Error while trying to receive package: "+e.getMessage());
+		}
+		
+		
+		return retString.toString();
 	}
 	
 	/**
@@ -365,35 +179,122 @@ public class BOServerWorker extends Thread
 		}
 		sendTeamStatusPackage[i++] = 0x00;
 	}
-	
-	/*private static final int OFF_ID = 1;
-	private static final int LENGTH_ID = 3;
-	
-	private static final int OFF_SCORE = 5;
-	private static final int LENGTH_SCORE = 5;
-	
-	private static final int OFF_PING = 11;
-	private static final int LENGTH_PING = 4;
-	
-	private static final int OFF_GUID = 16;
-	private static final int LENGTH_GUID = 8;
-	
-	private static final int OFF_NICK = 25;
-	private static final int LENGTH_NICK = 20;
-	
-	private static final int OFF_TEAM = 46;
-	private static final int LENGTH_TEAM = 1;*/
-	
-	
-	private int tempPackageLength;
-	private byte[] tempPackage;
-	
+		
 	private byte[] sendTeamStatusPackage;
-	private DatagramSocket socket;
-	private static final int BUFFERSIZE = 32768;
-	private BOServerWorkerAction boActionClass;
+	private static final int BUFFERSIZE = 2048;
 	private String password;
 	private InetAddress serverAddress;
 	private int serverPort;
+	private int connectionTimeout;
 }
 
+
+class StrParser
+{
+	public StrParser(String line)
+	{
+		this.totalString = line;
+		this.stringLeft = line;
+	}
+	
+	public int readInteger() throws BOWorkerException
+	{
+		int offset = 0;
+		
+		// skip leading whitespaces
+		for(;offset<stringLeft.length();++offset)
+		{
+			if(stringLeft.charAt(offset) != ' ')
+				break;
+		}
+		
+		// get string representation of integer
+		StringBuffer sVal = new StringBuffer();
+		for(;offset<stringLeft.length();++offset)
+		{
+			char curChar = stringLeft.charAt(offset);
+			if(curChar == ' ')
+				break;
+			else if(curChar != '-' && (curChar < '0' || curChar > '9'))
+				throw new BOWorkerException("Illegal integer value ("+totalString+" | "+stringLeft+")");
+			
+			sVal.append(curChar);
+		}
+		
+		int retVal = -1;
+		try
+		{
+			retVal = Integer.parseInt(sVal.toString());
+		} catch (NumberFormatException e)
+		{
+			throw new BOWorkerException("Unable to convert integer (from string: "+stringLeft+") :"+e.getMessage());
+		}
+		
+		// set new left string
+		stringLeft = stringLeft.substring(offset);
+		
+		return retVal;
+	}
+	
+	public String readUsername() throws BOWorkerException
+	{
+		int offset = 0;
+		
+		// skip leading whitespaces
+		for(;offset<stringLeft.length();++offset)
+		{
+			if(stringLeft.charAt(offset) != ' ')
+				break;
+		}
+		
+		StringBuffer sVal = new StringBuffer();
+		for(;offset<stringLeft.length()-2;++offset)
+		{
+			char curChar = stringLeft.charAt(offset);
+			char nextChar = stringLeft.charAt(offset+1);
+			char nnextChar = stringLeft.charAt(offset+2);
+			
+			sVal.append(curChar);
+			
+			if(nextChar == '^' && nnextChar == '7')
+				break;
+			
+		}
+		
+		// set new left string
+		stringLeft = stringLeft.substring(offset+3);
+		
+		return sVal.toString();
+	}
+	
+	public String readSimpleString() throws BOWorkerException
+	{
+		int offset = 0;
+		
+		// skip leading whitespaces
+		for(;offset<stringLeft.length();++offset)
+		{
+			if(stringLeft.charAt(offset) != ' ')
+				break;
+		}
+		
+		StringBuffer sVal = new StringBuffer();
+		for(;offset<stringLeft.length();++offset)
+		{
+			char curChar = stringLeft.charAt(offset);
+			
+			if(curChar == ' ')
+				break;
+			
+			sVal.append(curChar);
+		}
+		
+		// set new left string
+		stringLeft = stringLeft.substring(offset);
+		
+		return sVal.toString();
+	}
+	
+	private String totalString;
+	private String stringLeft;
+}

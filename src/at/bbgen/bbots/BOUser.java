@@ -141,6 +141,36 @@ public class BOUser implements Serializable, Cloneable
 		this.ping = ping;
 	}
 	
+	public int getLastmsg()
+	{
+		return lastmsg;
+	}
+
+	public void setLastmsg(int lastmsg)
+	{
+		this.lastmsg = lastmsg;
+	}
+
+	public int getQport()
+	{
+		return qport;
+	}
+
+	public void setQport(int qport)
+	{
+		this.qport = qport;
+	}
+
+	public int getRate()
+	{
+		return rate;
+	}
+
+	public void setRate(int rate)
+	{
+		this.rate = rate;
+	}
+	
 	@Override
 	public String toString()
 	{
@@ -162,4 +192,8 @@ public class BOUser implements Serializable, Cloneable
 	private int team;
 	private int score;
 	private int ping;
+
+	private int lastmsg;
+	private int qport;
+	private int rate;
 }

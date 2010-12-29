@@ -31,7 +31,7 @@ import java.util.TimerTask;
  * @author Bernhard Eder <bbots@bbgen.net>
  *
  */
-public class BOConnection implements BOServerWorkerAction
+public class BOConnection
 {
 	/**
 	 * Initializes all local data.
@@ -48,11 +48,13 @@ public class BOConnection implements BOServerWorkerAction
 		this.boServerAddress = boServerAddress;
 		this.boServerPort = boServerPort;
 		this.boServerTimer = boServerTimer;
-		boUsers = new HashMap<Integer, BOUser>();
+		synchronized(this)
+		{
+			boUsers = new HashMap<Integer, BOUser>();
+		}
 		try
 		{
-			boServerWorker = new BOServerWorker(this.boServerAddress, this.boServerPort, this.boServerPassword);
-			boServerWorker.registerAction(this);
+			boServerWorker = new BOServerWorker(this.boServerAddress, this.boServerPort, this.boServerPassword, 1000);
 		} catch (BOWorkerException e)
 		{
 			throw new BOConnectionException("Error while trying to instance BOServerWorker: "+e.getMessage());
@@ -68,7 +70,6 @@ public class BOConnection implements BOServerWorkerAction
 	public void stopAll()
 	{
 		disableTimer();
-		boServerWorker.stopWorker();
 	}
 	
 	/**
@@ -76,7 +77,7 @@ public class BOConnection implements BOServerWorkerAction
 	 */
 	public void startBOWorker()
 	{
-		boServerWorker.start();
+		//boServerWorker.start();
 	}
 	
 	/**
@@ -93,15 +94,27 @@ public class BOConnection implements BOServerWorkerAction
 			public void run()
 			{
 				if(boServerWorker != null)
-					try
-					{
-						boServerWorker.sendTeamStatusRequest();
-					} catch (BOWorkerException e)
-					{
-						System.out.println("Timer: Error while trying to sendRequest(): "+e.getMessage());
-					}
+					refreshTeamStatus();
 			}
 		}, boServerTimer, boServerTimer);
+	}
+	
+	private void refreshTeamStatus()
+	{
+		try
+		{
+			List<BOUser> newList = boServerWorker.sendTeamStatusRequest();
+			HashMap<Integer, BOUser> newBoUsers = new HashMap<Integer, BOUser>();
+			for(BOUser boUser : newList)
+				newBoUsers.put(Integer.valueOf(boUser.getGuid()), boUser);
+			synchronized(this)
+			{
+				boUsers = new HashMap<Integer, BOUser>(newBoUsers);
+			}
+		} catch (BOWorkerException e)
+		{
+			System.out.println("Timer: Error while trying to sendRequest(): "+e.getMessage());
+		}
 	}
 
 	/**
@@ -119,7 +132,7 @@ public class BOConnection implements BOServerWorkerAction
 	 * Callback function as defined in {@link BOServerWorkerAction}
 	 * The internal Black Ops connection will call it, when there is a new user list available
 	 */
-	@Override
+	/*@Override
 	public void commitBOUsers(List<BOUser> users)
 	{
 		HashMap<Integer, BOUser> newBoUsers = new HashMap<Integer, BOUser>();
@@ -131,7 +144,7 @@ public class BOConnection implements BOServerWorkerAction
 		{
 			boUsers = newBoUsers;
 		}
-	}
+	}*/
 	
 	/**
 	 * Returns a Black Ops user with the given GUID
