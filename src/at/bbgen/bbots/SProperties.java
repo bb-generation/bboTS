@@ -90,6 +90,9 @@ import java.util.Properties;
  * # server is queried for the user list.
  * Ranked.BOScanningInterval = 15000
  * 
+ * # The next property sets how many recognized players have to play on a server to get switched
+ * Ranked.MinimumSwitchingPlayers = 3
+ * 
  * ## Unranked ##
  * Unranked.ListeningChannels = 20 21 22 23
  * # If you don't set the Team0 property, users who are currently connecting
@@ -102,6 +105,7 @@ import java.util.Properties;
  * Unranked.BOServerPassword = AnotherP4ssword
  * 
  * Unranked.BOScanningInterval = 25000
+ * Unranked.MinimumSwitchingPlayers = 3
  * 
  * }</pre>
  * 
@@ -122,6 +126,7 @@ public class SProperties
 		boServerHost = new HashMap<String, String>();
 		boServerPort = new HashMap<String, Integer>();
 		boServerPassword = new HashMap<String, String>();
+		boMinimumPlayers = new HashMap<String, Integer>();
 		tsServerHost = null;
 		tsServerPort = -1;
 		tsVServerID = -1;
@@ -277,6 +282,24 @@ public class SProperties
 				}
 				else
 					throw new SPropertiesException(getMandatoryExceptionString(server+".BOScanningInterval"));
+				
+				
+				/***** MinimumSwitchingPlayers *****/
+				String sMinPlr = props.getProperty(server+".MinimumSwitchingPlayers");
+				if(sMinPlr != null)
+				{
+					int iminPlr = -1;
+					try
+					{
+						iminPlr = Integer.parseInt(sMinPlr);
+					} catch (NumberFormatException e)
+					{
+						throw new SPropertiesException("Setting '"+server+".MinimumSwitchingPlayers' contains a non numeric channel ID: "+e.getMessage());
+					}
+					boMinimumPlayers.put(server, iminPlr);
+				}
+				else
+					throw new SPropertiesException(getMandatoryExceptionString(server+".MinimumSwitchingPlayers"));
 				
 			}
 
@@ -546,6 +569,21 @@ public class SProperties
 	}
 	
 	/**
+	 * Gets the minimum recognized players to play on a server to enable switching
+	 * 
+	 * @param server Label of the Black Ops Server
+	 * @return Minimum player count to enable switching
+	 */
+	public int getMinimumPlayers(String server)
+	{
+		Integer minPlr = boMinimumPlayers.get(server);
+		if(minPlr == null)
+			return 3;
+		else
+			return minPlr;
+	}
+	
+	/**
 	 * Returns a list of all Black Ops Server Labels
 	 * @return list of all Black Ops server labels
 	 */
@@ -567,5 +605,6 @@ public class SProperties
 	private Map<String, String> boServerHost;
 	private Map<String, List<Integer>> listeningChannels;
 	private Map<String, ArrayList<Integer>> teamChannels;
+	private Map<String, Integer> boMinimumPlayers;
 	private String filename;
 }

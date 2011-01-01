@@ -166,8 +166,8 @@ public class BOTeamSwitcher
 				}
 			}
 			
-			// don't switch if only less than 3 players are playing
-			if(userPlayingCount < 3)
+			// don't switch if only less than [minPlr] players are playing
+			if(userPlayingCount < sProperties.getMinimumPlayers(servername))
 				return;
 			
 			for(int i=0;i<3;++i)

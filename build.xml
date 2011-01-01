@@ -67,8 +67,8 @@
 				<path refid="classpath"/>
 				<path location="${jar.file}"/>
 			</classpath>
-			<arg value="${config.dir}/config.properties"/>
-			<arg value="${config.dir}/users.properties"/>
+		<!--	<arg value="${config.dir}/config.properties"/>
+			<arg value="${config.dir}/users.properties"/>-->
 		</java>
 	</target>
 
